@@ -90,7 +90,8 @@ export class LoginComponent implements OnInit, OnDestroy {
     const success = this.authService.login(email, this.selectedRole);
 
     if (success) {
-      this.toastService.success(`Welcome back!`);
+      const name = this.authService.currentUser()?.name || 'back';
+      this.toastService.success(`Welcome back, ${name}! 👋`);
       this.router.navigate(['/dashboard']);
     } else {
       this.toastService.danger(`Login failed. Check your credentials or use Quick Sign In.`);
@@ -103,7 +104,8 @@ export class LoginComponent implements OnInit, OnDestroy {
     const success = this.authService.login(email, role);
 
     if (success) {
-      this.toastService.success(`Logged in as ${role === 'student' ? 'Alex Johnson' : 'Sarah Miller'} (Demo Sign In)`);
+      const name = this.authService.currentUser()?.name || (role === 'student' ? 'Alex Johnson' : 'Sarah Miller');
+      this.toastService.success(`Welcome back, ${name}! 👋`);
       this.router.navigate(['/dashboard']);
     }
   }

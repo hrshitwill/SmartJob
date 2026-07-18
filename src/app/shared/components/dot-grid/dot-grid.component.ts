@@ -2,322 +2,294 @@ import {
   Component,
   ElementRef,
   Input,
-  OnInit,
+  AfterViewInit,
   OnDestroy,
   ViewChild,
   NgZone,
   inject,
-  ChangeDetectionStrategy
+  ViewEncapsulation
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { gsap } from 'gsap';
+import { InertiaPlugin } from 'gsap/InertiaPlugin';
+
+gsap.registerPlugin(InertiaPlugin);
+
+/* ─── Helpers ──────────────────────────────────────────────────── */
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const m = hex.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+  if (!m) return { r: 0, g: 0, b: 0 };
+  return {
+    r: parseInt(m[1], 16),
+    g: parseInt(m[2], 16),
+    b: parseInt(m[3], 16)
+  };
+}
+
+function throttle(fn: (...args: any[]) => void, limit: number) {
+  let lastCall = 0;
+  return function (...args: any[]) {
+    const now = performance.now();
+    if (now - lastCall >= limit) {
+      lastCall = now;
+      fn(...args);
+    }
+  };
+}
 
 interface Dot {
-  x: number;
-  y: number;
-  baseX: number;
-  baseY: number;
-  vx: number;
-  vy: number;
-  size: number;
-  alpha: number;
-  scale: number;
+  cx: number;
+  cy: number;
+  xOffset: number;
+  yOffset: number;
+  _inertiaApplied: boolean;
 }
 
-interface Shockwave {
-  x: number;
-  y: number;
-  radius: number;
-  maxRadius: number;
-  strength: number;
-}
-
+/* ─── Component ─────────────────────────────────────────────────── */
 @Component({
   selector: 'app-dot-grid',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './dot-grid.component.html',
   styleUrl: './dot-grid.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  encapsulation: ViewEncapsulation.None
 })
-export class DotGridComponent implements OnInit, OnDestroy {
+export class DotGridComponent implements AfterViewInit, OnDestroy {
+
+  /* wrapper + canvas refs */
+  @ViewChild('wrap',   { static: true }) wrapRef!:   ElementRef<HTMLDivElement>;
   @ViewChild('canvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
 
-  @Input() dotSize = 2.5;
-  @Input() gap = 28;
-  @Input() baseColor = 'rgba(99, 102, 241, 0.25)';
-  @Input() activeColor = 'rgba(168, 85, 247, 0.95)';
-  @Input() proximity = 130;
-  @Input() shockRadius = 220;
-  @Input() shockStrength = 14;
+  /* props mirroring React Bits exactly */
+  @Input() dotSize        = 10;
+  @Input() gap            = 15;
+  @Input() baseColor      = '#5227FF';
+  @Input() activeColor    = '#5227FF';
+  @Input() proximity      = 120;
+  @Input() speedTrigger   = 100;
+  @Input() shockRadius    = 250;
+  @Input() shockStrength  = 5;
+  @Input() maxSpeed       = 5000;
+  @Input() resistance     = 750;
+  @Input() returnDuration = 1.5;
 
   private ngZone = inject(NgZone);
-  private ctx!: CanvasRenderingContext2D | null;
-  private animationFrameId: number | null = null;
-  private resizeObserver: ResizeObserver | null = null;
+
   private dots: Dot[] = [];
-  private shockwaves: Shockwave[] = [];
-  
-  private mouse = {
-    x: -1000,
-    y: -1000,
-    prevX: -1000,
-    prevY: -1000,
-    speedX: 0,
-    speedY: 0
+  private rafId: number | null = null;
+  private circlePath: Path2D | null = null;
+  private ro: ResizeObserver | null = null;
+
+  private pointer = {
+    x: 0, y: 0,
+    vx: 0, vy: 0,
+    speed: 0,
+    lastTime: 0,
+    lastX: 0, lastY: 0
   };
 
-  private width = 0;
-  private height = 0;
-  private dpr = 1;
-  private prefersReducedMotion = false;
-  
-  private boundMouseMove = this.onMouseMove.bind(this);
-  private boundMouseLeave = this.onMouseLeave.bind(this);
-  private boundClick = this.onClick.bind(this);
-  private boundTouch = this.onTouch.bind(this);
+  private throttledMove!: (e: MouseEvent) => void;
+  private boundClick!:    (e: MouseEvent) => void;
 
-  ngOnInit() {
-    this.prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    
+  /* ── Lifecycle ── */
+  ngAfterViewInit(): void {
     this.ngZone.runOutsideAngular(() => {
-      this.initCanvas();
-      this.setupListeners();
-      this.animate();
+      this.circlePath = this.buildCirclePath();
+      this.buildGrid();
+      this.startDrawLoop();
+      this.attachListeners();
+
+      this.ro = new ResizeObserver(() => this.buildGrid());
+      this.ro.observe(this.wrapRef.nativeElement);
     });
   }
 
-  ngOnDestroy() {
-    if (this.animationFrameId !== null) {
-      cancelAnimationFrame(this.animationFrameId);
-    }
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect();
-    }
-    const canvas = this.canvasRef.nativeElement;
-    const target = canvas.parentElement || canvas;
-    target.removeEventListener('mousemove', this.boundMouseMove);
-    target.removeEventListener('mouseleave', this.boundMouseLeave);
-    target.removeEventListener('click', this.boundClick);
-    target.removeEventListener('touchstart', this.boundTouch);
+  ngOnDestroy(): void {
+    if (this.rafId !== null) cancelAnimationFrame(this.rafId);
+    if (this.ro) this.ro.disconnect();
+    window.removeEventListener('mousemove', this.throttledMove);
+    window.removeEventListener('click', this.boundClick);
   }
 
-  private initCanvas() {
-    const canvas = this.canvasRef.nativeElement;
-    this.ctx = canvas.getContext('2d');
-    
-    this.resizeObserver = new ResizeObserver(() => {
-      this.resizeCanvas();
-    });
-    this.resizeObserver.observe(canvas.parentElement || canvas);
-
-    this.resizeCanvas();
+  /* ── Build circle Path2D once ── */
+  private buildCirclePath(): Path2D {
+    const p = new Path2D();
+    p.arc(0, 0, this.dotSize / 2, 0, Math.PI * 2);
+    return p;
   }
 
-  private resizeCanvas() {
+  /* ── Build / rebuild dot grid ── */
+  private buildGrid(): void {
+    const wrap   = this.wrapRef.nativeElement;
     const canvas = this.canvasRef.nativeElement;
-    const parent = canvas.parentElement || document.body;
-    
-    this.dpr = Math.min(window.devicePixelRatio || 1, 2);
-    this.width = parent.clientWidth;
-    this.height = parent.clientHeight;
 
-    canvas.width = this.width * this.dpr;
-    canvas.height = this.height * this.dpr;
-    canvas.style.width = `${this.width}px`;
-    canvas.style.height = `${this.height}px`;
+    const { width, height } = wrap.getBoundingClientRect();
+    if (!width || !height) return;
 
-    if (this.ctx) {
-      this.ctx.scale(this.dpr, this.dpr);
-    }
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width  = width  * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width  = `${width}px`;
+    canvas.style.height = `${height}px`;
 
-    this.buildGrid();
-  }
+    const ctx = canvas.getContext('2d');
+    if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  private buildGrid() {
+    const cell = this.dotSize + this.gap;
+    const cols = Math.floor((width  + this.gap) / cell);
+    const rows = Math.floor((height + this.gap) / cell);
+
+    const gridW = cell * cols - this.gap;
+    const gridH = cell * rows - this.gap;
+
+    const startX = (width  - gridW) / 2 + this.dotSize / 2;
+    const startY = (height - gridH) / 2 + this.dotSize / 2;
+
     this.dots = [];
-    const cols = Math.floor(this.width / this.gap);
-    const rows = Math.floor(this.height / this.gap);
-
-    const startX = (this.width - cols * this.gap) / 2 + this.gap / 2;
-    const startY = (this.height - rows * this.gap) / 2 + this.gap / 2;
-
-    for (let r = 0; r <= rows; r++) {
-      for (let c = 0; c <= cols; c++) {
-        const bx = startX + c * this.gap;
-        const by = startY + r * this.gap;
-        
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
         this.dots.push({
-          x: bx,
-          y: by,
-          baseX: bx,
-          baseY: by,
-          vx: 0,
-          vy: 0,
-          size: this.dotSize,
-          alpha: 0.25,
-          scale: 1
+          cx: startX + c * cell,
+          cy: startY + r * cell,
+          xOffset: 0,
+          yOffset: 0,
+          _inertiaApplied: false
         });
       }
     }
   }
 
-  private setupListeners() {
-    const canvas = this.canvasRef.nativeElement;
-    const target = canvas.parentElement || canvas;
+  /* ── 60fps draw loop ── */
+  private startDrawLoop(): void {
+    const proxSq    = this.proximity * this.proximity;
+    const baseRgb   = hexToRgb(this.baseColor);
+    const activeRgb = hexToRgb(this.activeColor);
 
-    target.addEventListener('mousemove', this.boundMouseMove, { passive: true });
-    target.addEventListener('mouseleave', this.boundMouseLeave, { passive: true });
-    target.addEventListener('click', this.boundClick, { passive: true });
-    target.addEventListener('touchstart', this.boundTouch, { passive: true });
-  }
-
-  private onMouseMove(e: MouseEvent) {
-    const canvas = this.canvasRef.nativeElement;
-    const rect = canvas.getBoundingClientRect();
-    const currX = e.clientX - rect.left;
-    const currY = e.clientY - rect.top;
-
-    if (this.mouse.prevX !== -1000) {
-      this.mouse.speedX = currX - this.mouse.prevX;
-      this.mouse.speedY = currY - this.mouse.prevY;
-    }
-
-    this.mouse.x = currX;
-    this.mouse.y = currY;
-    this.mouse.prevX = currX;
-    this.mouse.prevY = currY;
-  }
-
-  private onMouseLeave() {
-    this.mouse.x = -1000;
-    this.mouse.y = -1000;
-  }
-
-  private onClick(e: MouseEvent) {
-    const canvas = this.canvasRef.nativeElement;
-    const rect = canvas.getBoundingClientRect();
-    const cx = e.clientX - rect.left;
-    const cy = e.clientY - rect.top;
-    this.createShockwave(cx, cy);
-  }
-
-  private onTouch(e: TouchEvent) {
-    if (e.touches.length > 0) {
+    const draw = () => {
       const canvas = this.canvasRef.nativeElement;
-      const rect = canvas.getBoundingClientRect();
-      this.createShockwave(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
-    }
-  }
+      const ctx = canvas.getContext('2d');
+      if (!ctx || !this.circlePath) { this.rafId = requestAnimationFrame(draw); return; }
 
-  private createShockwave(x: number, y: number) {
-    if (this.prefersReducedMotion) return;
-    this.shockwaves.push({
-      x,
-      y,
-      radius: 5,
-      maxRadius: this.shockRadius,
-      strength: this.shockStrength
-    });
-  }
+      const { width, height } = canvas.getBoundingClientRect();
+      ctx.clearRect(0, 0, width, height);
 
-  private animate() {
-    this.render();
-    this.animationFrameId = requestAnimationFrame(() => this.animate());
-  }
+      const px = this.pointer.x;
+      const py = this.pointer.y;
 
-  private render() {
-    if (!this.ctx) return;
-    this.ctx.clearRect(0, 0, this.width, this.height);
+      for (const dot of this.dots) {
+        const ox = dot.cx + dot.xOffset;
+        const oy = dot.cy + dot.yOffset;
+        const dx = dot.cx - px;
+        const dy = dot.cy - py;
+        const dsq = dx * dx + dy * dy;
 
-    // Update Shockwaves
-    for (let i = this.shockwaves.length - 1; i >= 0; i--) {
-      const wave = this.shockwaves[i];
-      wave.radius += 7;
-      if (wave.radius >= wave.maxRadius) {
-        this.shockwaves.splice(i, 1);
+        let fillStyle = this.baseColor;
+        if (dsq <= proxSq) {
+          const t = 1 - Math.sqrt(dsq) / this.proximity;
+          const r = Math.round(baseRgb.r + (activeRgb.r - baseRgb.r) * t);
+          const g = Math.round(baseRgb.g + (activeRgb.g - baseRgb.g) * t);
+          const b = Math.round(baseRgb.b + (activeRgb.b - baseRgb.b) * t);
+          fillStyle = `rgb(${r},${g},${b})`;
+        }
+
+        ctx.save();
+        ctx.translate(ox, oy);
+        ctx.fillStyle = fillStyle;
+        ctx.fill(this.circlePath);
+        ctx.restore();
       }
-    }
 
-    const mouseActive = this.mouse.x !== -1000;
+      this.rafId = requestAnimationFrame(draw);
+    };
 
-    for (let i = 0; i < this.dots.length; i++) {
-      const dot = this.dots[i];
+    this.rafId = requestAnimationFrame(draw);
+  }
 
-      let targetScale = 1;
-      let targetAlpha = 0.25;
+  /* ── Mouse / click listeners ── */
+  private attachListeners(): void {
+    const onMove = (e: MouseEvent) => {
+      const now = performance.now();
+      const pr  = this.pointer;
+      const dt  = pr.lastTime ? now - pr.lastTime : 16;
+      const dx  = e.clientX - pr.lastX;
+      const dy  = e.clientY - pr.lastY;
 
-      if (mouseActive && !this.prefersReducedMotion) {
-        const dx = dot.x - this.mouse.x;
-        const dy = dot.y - this.mouse.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+      let vx    = (dx / dt) * 1000;
+      let vy    = (dy / dt) * 1000;
+      let speed = Math.hypot(vx, vy);
 
-        if (dist < this.proximity) {
-          const ratio = 1 - dist / this.proximity;
-          targetScale = 1 + ratio * 0.75;
-          targetAlpha = 0.25 + ratio * 0.7;
+      if (speed > this.maxSpeed) {
+        const scale = this.maxSpeed / speed;
+        vx *= scale; vy *= scale;
+        speed = this.maxSpeed;
+      }
 
-          // Mouse speed inertia displacement
-          if (Math.abs(this.mouse.speedX) > 1 || Math.abs(this.mouse.speedY) > 1) {
-            dot.vx += (this.mouse.speedX * 0.08) * ratio;
-            dot.vy += (this.mouse.speedY * 0.08) * ratio;
-          }
+      pr.lastTime = now;
+      pr.lastX    = e.clientX;
+      pr.lastY    = e.clientY;
+      pr.vx = vx; pr.vy = vy;
+      pr.speed = speed;
+
+      const rect = this.canvasRef.nativeElement.getBoundingClientRect();
+      pr.x = e.clientX - rect.left;
+      pr.y = e.clientY - rect.top;
+
+      /* inertia on fast swipes */
+      for (const dot of this.dots) {
+        const dist = Math.hypot(dot.cx - pr.x, dot.cy - pr.y);
+        if (speed > this.speedTrigger && dist < this.proximity && !dot._inertiaApplied) {
+          dot._inertiaApplied = true;
+          gsap.killTweensOf(dot);
+          const pushX = (dot.cx - pr.x) + vx * 0.005;
+          const pushY = (dot.cy - pr.y) + vy * 0.005;
+          gsap.to(dot, {
+            inertia: { xOffset: pushX, yOffset: pushY, resistance: this.resistance },
+            onComplete: () => {
+              gsap.to(dot, {
+                xOffset: 0,
+                yOffset: 0,
+                duration: this.returnDuration,
+                ease: 'elastic.out(1, 0.75)'
+              });
+              dot._inertiaApplied = false;
+            }
+          });
         }
       }
+    };
 
-      // Apply Shockwaves
-      for (let j = 0; j < this.shockwaves.length; j++) {
-        const wave = this.shockwaves[j];
-        const dx = dot.x - wave.x;
-        const dy = dot.y - wave.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const waveDelta = Math.abs(dist - wave.radius);
+    const onClick = (e: MouseEvent) => {
+      const rect = this.canvasRef.nativeElement.getBoundingClientRect();
+      const cx   = e.clientX - rect.left;
+      const cy   = e.clientY - rect.top;
 
-        if (waveDelta < 35 && dist > 0) {
-          const waveRatio = 1 - waveDelta / 35;
-          const force = (waveRatio * wave.strength);
-          const angle = Math.atan2(dy, dx);
-
-          dot.vx += Math.cos(angle) * force;
-          dot.vy += Math.sin(angle) * force;
-          targetScale = Math.max(targetScale, 1.4);
-          targetAlpha = Math.max(targetAlpha, 0.95);
+      for (const dot of this.dots) {
+        const dist = Math.hypot(dot.cx - cx, dot.cy - cy);
+        if (dist < this.shockRadius && !dot._inertiaApplied) {
+          dot._inertiaApplied = true;
+          gsap.killTweensOf(dot);
+          const falloff = Math.max(0, 1 - dist / this.shockRadius);
+          const pushX = (dot.cx - cx) * this.shockStrength * falloff;
+          const pushY = (dot.cy - cy) * this.shockStrength * falloff;
+          gsap.to(dot, {
+            inertia: { xOffset: pushX, yOffset: pushY, resistance: this.resistance },
+            onComplete: () => {
+              gsap.to(dot, {
+                xOffset: 0,
+                yOffset: 0,
+                duration: this.returnDuration,
+                ease: 'elastic.out(1, 0.75)'
+              });
+              dot._inertiaApplied = false;
+            }
+          });
         }
       }
+    };
 
-      // Spring physics return to base position
-      if (!this.prefersReducedMotion) {
-        const springX = (dot.baseX - dot.x) * 0.08;
-        const springY = (dot.baseY - dot.y) * 0.08;
-        
-        dot.vx = (dot.vx + springX) * 0.84;
-        dot.vy = (dot.vy + springY) * 0.84;
-        
-        dot.x += dot.vx;
-        dot.y += dot.vy;
-      } else {
-        dot.x = dot.baseX;
-        dot.y = dot.baseY;
-      }
+    this.throttledMove = throttle(onMove, 50) as (e: MouseEvent) => void;
+    this.boundClick    = onClick;
 
-      // Smooth property scaling
-      dot.scale += (targetScale - dot.scale) * 0.15;
-      dot.alpha += (targetAlpha - dot.alpha) * 0.15;
-
-      // Draw dot
-      this.ctx.beginPath();
-      const currentRadius = Math.max(0.5, dot.size * dot.scale);
-      this.ctx.arc(dot.x, dot.y, currentRadius, 0, Math.PI * 2);
-
-      if (dot.alpha > 0.45) {
-        this.ctx.fillStyle = this.activeColor;
-      } else {
-        this.ctx.fillStyle = this.baseColor;
-      }
-      
-      this.ctx.globalAlpha = Math.min(Math.max(dot.alpha, 0.15), 1.0);
-      this.ctx.fill();
-    }
-
-    this.ctx.globalAlpha = 1.0;
+    window.addEventListener('mousemove', this.throttledMove, { passive: true });
+    window.addEventListener('click',     this.boundClick);
   }
 }
