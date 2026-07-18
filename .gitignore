@@ -1,0 +1,19 @@
+# Angular / Node frontend - not tracked on backend branch
+node_modules/
+dist/
+.angular/
+*.log
+
+# OS / Editor files
+.DS_Store
+.vscode/
+.idea/
+
+# Java / Maven
+backend/target/
+backend/*.jar
+*.class
+
+# Environment secrets
+.env
+.env.local
