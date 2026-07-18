@@ -1,0 +1,433 @@
+.wizard-container {
+  max-width: 600px;
+  margin: 40px auto;
+}
+
+/* Progress Header */
+.wizard-header {
+  margin-bottom: 32px;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 4px;
+  background-color: var(--bg-tertiary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--accent-gradient);
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.step-indicators {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+}
+
+.step-dot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  position: relative;
+  z-index: 1;
+
+  .dot-num {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-full);
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+  }
+
+  .dot-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    transition: all 0.25s ease;
+
+    @media (max-width: 576px) {
+      display: none; // hide labels on very small screens
+    }
+  }
+
+  &.active {
+    .dot-num {
+      border-color: var(--accent-primary);
+      color: var(--text-primary);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+    }
+    .dot-label {
+      color: var(--text-primary);
+    }
+  }
+
+  &.completed {
+    .dot-num {
+      background: var(--accent-gradient);
+      border-color: transparent;
+      color: #ffffff;
+    }
+    .dot-label {
+      color: var(--accent-primary);
+    }
+  }
+}
+
+/* Wizard Body */
+.wizard-body {
+  min-height: 380px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  padding: 36px;
+  margin-bottom: 24px;
+
+  @media (max-width: 576px) {
+    padding: 24px 16px;
+  }
+}
+
+.step-content {
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .subtitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+  }
+}
+
+.step-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Step 3: Radio Cards */
+.radio-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.radio-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  input[type="radio"] {
+    margin-top: 4px;
+    accent-color: var(--accent-primary);
+  }
+
+  .radio-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .radio-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+  }
+
+  .radio-desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  &:hover {
+    border-color: var(--border-color-hover);
+  }
+
+  &.selected {
+    border-color: var(--accent-primary);
+    background-color: rgba(99, 102, 241, 0.03);
+    box-shadow: var(--accent-glow);
+  }
+}
+
+/* Step 4: Skills Tagger */
+.skills-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.selected-skills-box {
+  min-height: 80px;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-content: flex-start;
+}
+
+.no-skills-placeholder {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.skill-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  transition: all 0.15s ease;
+
+  .btn-remove-tag {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    padding: 0;
+
+    &:hover {
+      color: var(--danger);
+    }
+  }
+
+  &:hover {
+    border-color: var(--accent-primary);
+  }
+}
+
+.custom-skill-input {
+  display: flex;
+  gap: 12px;
+  
+  input {
+    flex: 1;
+  }
+}
+
+.suggested-skills {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+  
+  .suggestions-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+.suggestions-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.suggestion-chip {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: var(--text-primary);
+    border-color: var(--border-color-hover);
+  }
+
+  &.selected {
+    background: var(--accent-gradient);
+    color: #ffffff;
+    border-color: transparent;
+  }
+}
+
+/* Step 5: Resume Upload Dropzone */
+.upload-dropzone {
+  border: 2px dashed var(--border-color);
+  background-color: var(--bg-tertiary);
+  border-radius: var(--radius-lg);
+  padding: 40px 24px;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s ease;
+  position: relative;
+
+  .upload-icon {
+    width: 48px;
+    height: 48px;
+    color: var(--text-muted);
+    transition: color 0.2s ease, transform 0.2s ease;
+  }
+
+  .dropzone-text {
+    font-size: 0.95rem;
+    font-weight: 600;
+    
+    .browse-link {
+      color: var(--accent-primary);
+      text-decoration: underline;
+    }
+  }
+
+  .file-types {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .hidden-file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  &:hover, &.dragging {
+    border-color: var(--accent-primary);
+    background-color: rgba(99, 102, 241, 0.02);
+    
+    .upload-icon {
+      color: var(--accent-primary);
+      transform: translateY(-4px);
+    }
+  }
+}
+
+.uploaded-file-row {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background-color: var(--bg-tertiary);
+  border-color: rgba(255, 255, 255, 0.06);
+
+  .file-icon {
+    width: 24px;
+    height: 24px;
+    color: var(--accent-primary);
+  }
+
+  .file-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    
+    .file-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .file-size {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+  }
+}
+
+/* Resume Parser Skeleton Loader */
+.parsing-loader-box {
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-tertiary);
+  border-radius: var(--radius-lg);
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+
+  .parser-skeleton-line {
+    height: 12px;
+    width: 100%;
+    border-radius: var(--radius-sm);
+    
+    &.title {
+      height: 20px;
+      width: 60%;
+    }
+
+    &.short {
+      width: 40%;
+    }
+  }
+
+  .parsing-text {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--accent-primary);
+    margin-top: 10px;
+    animation: fadeIn 1s infinite alternate;
+  }
+}
+
+/* Wizard Footer */
+.wizard-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  button {
+    min-width: 120px;
+  }
+}
+
+.error-msg {
+  font-size: 0.75rem;
+  color: var(--danger);
+  margin-top: 6px;
+  font-weight: 500;
+}

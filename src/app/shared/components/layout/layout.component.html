@@ -1,0 +1,98 @@
+<header class="app-header">
+  <div class="header-container">
+    <div class="logo-area" routerLink="/dashboard">
+      <span class="logo-symbol">CX</span>
+      <span class="logo-text">CredX <span class="logo-highlight text-gradient">Match</span></span>
+    </div>
+
+    <!-- Desktop Navigation Links -->
+    <nav class="desktop-nav">
+      @if (authService.isStudent()) {
+        <a routerLink="/dashboard" routerLinkActive="active-link" class="nav-link">Dashboard</a>
+        <a routerLink="/jobs" routerLinkActive="active-link" class="nav-link">Find Jobs</a>
+        <a routerLink="/tracker" routerLinkActive="active-link" class="nav-link">Tracker</a>
+      } @else if (authService.isRecruiter()) {
+        <a routerLink="/dashboard" routerLinkActive="active-link" class="nav-link">Dashboard</a>
+      }
+    </nav>
+
+    <!-- User Action Area -->
+    <div class="user-actions">
+      <div class="user-profile">
+        @if (authService.isStudent() && profileService.currentProfile(); as profile) {
+          <div class="profile-avatar">
+            {{ profile.name.charAt(0) }}
+          </div>
+          <div class="profile-details">
+            <span class="profile-name">{{ profile.name }}</span>
+            <span class="profile-role">Student</span>
+          </div>
+        } @else {
+          <div class="profile-avatar recruiter-avatar">
+            {{ authService.currentUser()?.name?.charAt(0) || 'R' }}
+          </div>
+          <div class="profile-details">
+            <span class="profile-name">{{ authService.currentUser()?.name }}</span>
+            <span class="profile-role">Recruiter</span>
+          </div>
+        }
+      </div>
+      <!-- Theme Switcher Toggle -->
+      <button (click)="toggleTheme()" class="theme-toggle-btn" [title]="isDarkTheme() ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+        @if (isDarkTheme()) {
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+          </svg>
+        } @else {
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        }
+      </button>
+
+      <button (click)="logout()" class="btn-logout" title="Log Out">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+      </button>
+
+      <!-- Hamburger toggle button -->
+      <button class="mobile-toggle" (click)="toggleMobileMenu()" aria-label="Toggle Navigation">
+        <span class="bar" [class.open]="isMobileMenuOpen()"></span>
+        <span class="bar" [class.open]="isMobileMenuOpen()"></span>
+        <span class="bar" [class.open]="isMobileMenuOpen()"></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Mobile Navigation Drawer -->
+<div class="mobile-nav-overlay" [class.show]="isMobileMenuOpen()" (click)="closeMobileMenu()"></div>
+<div class="mobile-nav-drawer" [class.show]="isMobileMenuOpen()">
+  <div class="drawer-header">
+    <span class="logo-text">CredX <span class="logo-highlight text-gradient">Match</span></span>
+    <button class="btn-close-drawer" (click)="closeMobileMenu()">&times;</button>
+  </div>
+  <nav class="mobile-links">
+    @if (authService.isStudent()) {
+      <a routerLink="/dashboard" routerLinkActive="active-link" (click)="closeMobileMenu()" class="mobile-link">Dashboard</a>
+      <a routerLink="/jobs" routerLinkActive="active-link" (click)="closeMobileMenu()" class="mobile-link">Find Jobs</a>
+      <a routerLink="/tracker" routerLinkActive="active-link" (click)="closeMobileMenu()" class="mobile-link">Tracker</a>
+      <a routerLink="/onboarding" routerLinkActive="active-link" (click)="closeMobileMenu()" class="mobile-link">Edit Profile</a>
+    } @else if (authService.isRecruiter()) {
+      <a routerLink="/dashboard" routerLinkActive="active-link" (click)="closeMobileMenu()" class="mobile-link">Dashboard</a>
+    }
+    <hr class="mobile-divider">
+    <button (click)="logout(); closeMobileMenu()" class="mobile-logout-btn">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+      </svg>
+      Log Out
+    </button>
+  </nav>
+</div>
+
+<!-- Core Content Panel -->
+<main class="layout-content animate-fade">
+  <router-outlet></router-outlet>
+</main>

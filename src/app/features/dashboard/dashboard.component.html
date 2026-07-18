@@ -1,0 +1,678 @@
+<div class="dashboard-page animate-fade">
+
+  <!-- STUDENT DASHBOARD VIEW -->
+  @if (authService.isStudent()) {
+    <div class="student-dashboard">
+      <!-- Welcome Banner -->
+      <section class="welcome-banner card">
+        <div class="welcome-text">
+          <h1>Welcome Back, <span class="text-gradient">{{ profileService.currentProfile()?.name }}</span> 👋</h1>
+          <p>We've found new job recommendations matching your skills and preferences. Take a look below!</p>
+        </div>
+        <div class="quick-cta">
+          <a routerLink="/jobs" class="btn btn-primary">Find Matches</a>
+        </div>
+      </section>
+
+      <!-- Primary Premium Widgets Grid -->
+      <section class="premium-widgets-grid">
+        <!-- Widget 1: Detailed Profile Strength Ring -->
+        <div class="card premium-widget-card profile-strength-widget" routerLink="/onboarding" style="cursor: pointer;">
+          <div class="widget-header">
+            <h3>Profile Strength</h3>
+            <span class="badge badge-neutral">Interactive</span>
+          </div>
+          <div class="widget-body flex-row-center">
+            <!-- Circular Progress Ring SVG -->
+            <div class="circle-ring-container">
+              <svg class="progress-ring" width="90" height="90">
+                <circle class="progress-ring-bg" stroke="rgba(255,255,255,0.04)" stroke-width="6" fill="transparent" r="36" cx="45" cy="45"></circle>
+                <circle 
+                  class="progress-ring-fill" 
+                  stroke="url(#widgetGrad)" 
+                  stroke-width="6" 
+                  stroke-linecap="round" 
+                  fill="transparent" 
+                  r="36" 
+                  cx="45" 
+                  cy="45"
+                  [attr.stroke-dasharray]="2 * 3.14159 * 36"
+                  [attr.stroke-dashoffset]="2 * 3.14159 * 36 * (1 - profileService.getProfileCompleteness() / 100)"
+                ></circle>
+                <defs>
+                  <linearGradient id="widgetGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#6366f1" />
+                    <stop offset="100%" stop-color="#ec4899" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div class="circle-val">{{ profileService.getProfileCompleteness() }}%</div>
+            </div>
+            
+            <div class="strength-details">
+              <div class="gamified-badge-row">
+                @if (profileService.getProfileCompleteness() < 50) {
+                  <span class="badge badge-warning gamified-level-badge">🔥 Profile Rising</span>
+                } @else if (profileService.getProfileCompleteness() < 85) {
+                  <span class="badge badge-success gamified-level-badge">⭐ Recruiter Ready</span>
+                } @else {
+                  <span class="badge badge-primary gamified-level-badge">🏆 Top Candidate</span>
+                }
+                <span class="xp-badge">{{ profileService.getProfileCompleteness() * 10 }} XP</span>
+              </div>
+              
+              @if (profileService.getProfileCompleteness() < 50) {
+                <h4 class="encouraging-msg text-gradient">Keep going!</h4>
+                <p>Add skills to unlock matches.</p>
+              } @else if (profileService.getProfileCompleteness() < 85) {
+                <h4 class="encouraging-msg text-gradient">Almost there!</h4>
+                <p>Recruiters are 8x more likely to notice profiles above 85%.</p>
+              } @else {
+                <h4 class="encouraging-msg text-gradient">Excellent Profile!</h4>
+                <p>Fully optimized for automatic search rankings.</p>
+              }
+              <div class="milestones-row">
+                <span class="milestone-dot" [class.done]="profileService.currentProfile()?.resumeName">Resume</span>
+                <span class="milestone-dot" [class.done]="(profileService.currentProfile()?.skills?.length || 0) > 3">Skills</span>
+                <span class="milestone-dot" [class.done]="profileService.currentProfile()?.githubUrl">Socials</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Widget 2: AI Career Score -->
+        <div class="card premium-widget-card ai-score-widget">
+          <div class="widget-header">
+            <h3>AI Fit Index</h3>
+            <span class="badge badge-success">Live Score</span>
+          </div>
+          <div class="widget-body">
+            <div class="score-value-row">
+              <span class="score-val">{{ aiCareerScore() }}</span>
+              <span class="score-max">/100</span>
+              <span class="score-trendup">📈 Index</span>
+            </div>
+            <div class="ai-metrics-list">
+              <div class="ai-metric-item">
+                <div class="metric-info">
+                  <span>Technical Fit</span>
+                  <span>{{ profileService.getProfileCompleteness() >= 75 ? '92%' : '65%' }}</span>
+                </div>
+                <div class="metric-bar"><div class="fill" [style.width.%]="profileService.getProfileCompleteness() >= 75 ? 92 : 65"></div></div>
+              </div>
+              <div class="ai-metric-item">
+                <div class="metric-info">
+                  <span>Academic Standing</span>
+                  <span>{{ profileService.currentProfile()?.gpa ? Math.round((profileService.currentProfile()!.gpa / 4) * 100) + '%' : 'N/A' }}</span>
+                </div>
+                <div class="metric-bar"><div class="fill" [style.width.%]="profileService.currentProfile()?.gpa ? (profileService.currentProfile()!.gpa / 4) * 100 : 0"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Widget 3: Weekly Application Momentum (Sparkline) -->
+        <div class="card premium-widget-card momentum-widget">
+          <div class="widget-header">
+            <h3>Weekly Momentum</h3>
+            <span class="badge badge-neutral">Applications Activity</span>
+          </div>
+          <div class="widget-body">
+            <div class="momentum-stat">
+              <span class="val">{{ getStudentApplications().length }}</span>
+              <span class="lbl">Pending Review</span>
+            </div>
+            <!-- Sparkline CSS bar chart -->
+            <div class="sparkline-container">
+              @for (day of weeklyProgress; track day.day) {
+                <div class="spark-bar-wrapper">
+                  <div class="spark-bar" [style.height.%]="day.value" [title]="day.value + '% activity'"></div>
+                  <span class="spark-label">{{ day.day }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Secondary Info Panels: Demand, Companies & Deadlines -->
+      <section class="secondary-widgets-grid">
+        <!-- Market Demand Trends -->
+        <div class="card info-widget-card">
+          <h4>Market Skill Demand</h4>
+          <div class="trends-list">
+            @for (trend of marketTrends; track trend.skill) {
+              <div class="trend-item">
+                <span class="trend-skill">{{ trend.skill }}</span>
+                <span class="trend-value" [class.up]="trend.trend === 'up'" [class.down]="trend.trend === 'down'">
+                  {{ trend.change }} {{ trend.trend === 'up' ? '↗' : '↘' }}
+                </span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Dream Company Tracker -->
+        <div class="card info-widget-card">
+          <h4>Dream Company Tracker</h4>
+          <div class="companies-list">
+            @for (comp of dreamCompanies; track comp.name) {
+              <div class="company-row">
+                <div class="company-meta">
+                  <span class="comp-badge">{{ comp.name.charAt(0) }}</span>
+                  <span class="comp-name">{{ comp.name }}</span>
+                </div>
+                <span class="comp-match badge badge-success">{{ comp.match }} Fit</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Upcoming Deadlines -->
+        <div class="card info-widget-card">
+          <h4>Upcoming Deadlines</h4>
+          <div class="deadlines-list">
+            @for (dead of upcomingDeadlines; track dead.title) {
+              <div class="deadline-item">
+                <div class="deadline-meta">
+                  <span class="dead-title">{{ dead.title }}</span>
+                  <span class="dead-comp">{{ dead.company }}</span>
+                </div>
+                <span class="dead-days badge badge-warning">{{ dead.daysLeft }}d left</span>
+              </div>
+            }
+          </div>
+        </div>
+      </section>
+
+      <!-- Main Columns -->
+      <div class="dashboard-columns">
+        <!-- Left: Top Matches Feed -->
+        <div class="column-left">
+          <div class="section-title-row">
+            <h2>Recommended for You</h2>
+            <a routerLink="/jobs" class="view-all-link">See all matches →</a>
+          </div>
+
+          <div class="matches-list">
+            @for (job of jobService.matchedJobs().slice(0, 3); track job.id) {
+              <div class="card match-item-card" [routerLink]="['/jobs', job.id]">
+                <div class="match-card-top">
+                  <div class="company-logo-badge">{{ job.company.charAt(0) }}</div>
+                  <div class="job-summary">
+                    <div class="title-row">
+                      <h3>{{ job.title }}</h3>
+                      @if (job.sponsorshipRequired) {
+                        <span class="badge badge-neutral card-badge">Sponsorship</span>
+                      }
+                    </div>
+                    <p>{{ job.company }} • {{ job.location }} • <span class="work-mode-badge">{{ job.workMode | uppercase }}</span></p>
+                  </div>
+                  <!-- Score Circle Progress -->
+                  <div class="score-badge" [class.high-score]="job.match.score >= 80" [class.medium-score]="job.match.score >= 50 && job.match.score < 80" [class.low-score]="job.match.score < 50">
+                    {{ job.match.score | matchScore }}
+                  </div>
+                </div>
+
+                <div class="match-card-details">
+                  <div class="skills-overlap">
+                    <span class="detail-label">Matched Skills:</span>
+                    <div class="tag-row">
+                      @for (skill of job.match.skillsMatched; track skill) {
+                        <span class="badge badge-success skill-chip">{{ skill }}</span>
+                      }
+                      @if (job.match.skillsMatched.length === 0) {
+                        <span class="no-overlap-text">None</span>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="explanation-box">
+                    <ul>
+                      @for (expl of job.match.explanation.slice(0, 2); track expl) {
+                        <li>{{ expl }}</li>
+                      }
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Right: Recent Applications Summary -->
+        <div class="column-right">
+          <h2>Recent Applications</h2>
+          <div class="card applications-card">
+            @if (getStudentApplications().length === 0) {
+              <div class="empty-state">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 18.666A12 12 0 0012 2.25a12 12 0 00-3.666 16.416m7.332 0A12 12 0 0012 21.75a12 12 0 00-3.666-3.084" />
+                </svg>
+                <p>No applications submitted yet.</p>
+                <a routerLink="/jobs" class="btn btn-outline btn-sm">Find Matches & Apply</a>
+              </div>
+            } @else {
+              <div class="app-timeline">
+                @for (app of getStudentApplications().slice(0, 4); track app.id) {
+                  <div class="app-timeline-item">
+                    <div class="timeline-line"></div>
+                    <div class="timeline-dot" [class]="'dot-' + app.status"></div>
+                    <div class="timeline-content">
+                      <div class="timeline-header">
+                        <h4>{{ app.jobTitle }}</h4>
+                        <span class="badge" [class]="'badge-' + (app.status === 'offered' ? 'success' : app.status === 'declined' ? 'danger' : 'neutral')">
+                          {{ app.status | uppercase }}
+                        </span>
+                      </div>
+                      <p class="timeline-meta">{{ app.companyName }} • Applied on {{ app.appliedDate }}</p>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- RECRUITER PORTAL VIEW -->
+  @if (authService.isRecruiter()) {
+    <div class="recruiter-dashboard">
+      <!-- Welcome Banner -->
+      <section class="welcome-banner card">
+        <div class="welcome-text">
+          <h1>Recruiter Console: <span class="text-gradient">{{ authService.currentUser()?.name }}</span> 🏢</h1>
+          <p>Post and manage job opportunities, view applicants, and filter candidates using CredX Smart Match Scores.</p>
+        </div>
+        <div class="quick-cta">
+          <button (click)="showPostJobModal.set(true)" class="btn btn-primary">
+            + Post New Job
+          </button>
+        </div>
+      </section>
+
+      <!-- Stats Grid -->
+      <section class="stats-grid">
+        <div class="card stat-card">
+          <div class="stat-icon text-gradient">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Active Postings</span>
+            <span class="stat-value">{{ getPostedJobs().length }}</span>
+            <span class="stat-subtext">Listed on candidate matching feeds</span>
+          </div>
+        </div>
+
+        <div class="card stat-card">
+          <div class="stat-icon text-gradient">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Total Applicants</span>
+            <span class="stat-value">{{ getApplicants().length }}</span>
+            <span class="stat-subtext">Awaiting evaluation and review</span>
+          </div>
+        </div>
+
+        <div class="card stat-card">
+          <div class="stat-icon text-gradient">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Average Match Score</span>
+            <span class="stat-value">85%</span>
+            <span class="stat-subtext">Premium candidate qualifications</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Recruiter Pipeline Funnel Visual -->
+      <section class="hiring-funnel-card card">
+        <div class="section-header">
+          <h2>Hiring Funnel Status</h2>
+          <p>Visual workflow distribution of all candidate application pipelines.</p>
+        </div>
+        <div class="funnel-container">
+          <div class="funnel-stage">
+            <span class="stage-name">Applied</span>
+            <div class="stage-bar" style="width: 100%">
+              <span class="stage-count">{{ getApplicants().length }} Candidates</span>
+            </div>
+          </div>
+          <div class="funnel-stage">
+            <span class="stage-name">Under Review</span>
+            <div class="stage-bar" style="width: 75%">
+              <span class="stage-count">Reviewing Options</span>
+            </div>
+          </div>
+          <div class="funnel-stage">
+            <span class="stage-name">Interviewing</span>
+            <div class="stage-bar" style="width: 50%">
+              <span class="stage-count">2 Active Sessions</span>
+            </div>
+          </div>
+          <div class="funnel-stage">
+            <span class="stage-name">Offered</span>
+            <div class="stage-bar" style="width: 25%">
+              <span class="stage-count">1 Selection Pending</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Applicants List -->
+      <section class="applicants-section card">
+        <div class="section-header">
+          <h2>Active Applicants Feed</h2>
+          <p>Review candidate profiles, check their match compatibility scores, and transition their workflow states.</p>
+        </div>
+
+        <div class="table-container">
+          <table class="applicants-table">
+            <thead>
+              <tr>
+                <th>Candidate</th>
+                <th>Role Applied</th>
+                <th>Match Score</th>
+                <th>Applied Date</th>
+                <th>Workflow Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (app of getApplicants(); track app.id) {
+                <tr>
+                  <td>
+                    <div 
+                      class="applicant-cell" 
+                      (click)="inspectApplicant(app)" 
+                      style="cursor: pointer;"
+                      title="Inspect Candidate Profile"
+                    >
+                      <div class="applicant-avatar">{{ app.studentId.substring(5, 7) || 'S' }}</div>
+                      <div>
+                        <div class="applicant-name">Alex Johnson</div>
+                        <div class="applicant-email">student&#64;credx.com</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="job-applied">{{ app.jobTitle }}</div>
+                    <div class="company-sub">{{ app.companyName }}</div>
+                  </td>
+                  <td>
+                    <div class="table-score-badge" [class.high]="app.matchScore >= 80" [class.med]="app.matchScore >= 50 && app.matchScore < 80">
+                      {{ app.matchScore }}% Match
+                    </div>
+                  </td>
+                  <td>{{ app.appliedDate }}</td>
+                  <td>
+                    <select 
+                      [value]="app.status" 
+                      (change)="updateApplicantStatus(app.id, $any($event.target).value)" 
+                      class="table-select"
+                    >
+                      <option value="applied">Applied</option>
+                      <option value="reviewing">Reviewing</option>
+                      <option value="interviewing">Interviewing</option>
+                      <option value="offered">Offered</option>
+                      <option value="declined">Declined</option>
+                    </select>
+                  </td>
+                </tr>
+              }
+              @if (getApplicants().length === 0) {
+                <tr>
+                  <td colspan="5" class="table-empty">No active applicants at this time.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  }
+
+  <!-- POST JOB MODAL (RECRUITER) -->
+  @if (showPostJobModal()) {
+    <div class="modal-backdrop" (click)="showPostJobModal.set(false)"></div>
+    <div class="modal-container card animate-slide-up">
+      <div class="modal-header">
+        <h2>Post a Job Opportunity</h2>
+        <button type="button" class="btn-close-modal" (click)="showPostJobModal.set(false)">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <form [formGroup]="postJobForm" (ngSubmit)="submitJob()" class="post-job-form">
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="jobTitle">Job Title</label>
+              <input type="text" id="jobTitle" formControlName="title" placeholder="e.g. Lead Angular Engineer">
+            </div>
+            <div class="form-group">
+              <label for="company">Company Name</label>
+              <input type="text" id="company" formControlName="company" placeholder="e.g. Vercel">
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="location">Location</label>
+              <input type="text" id="location" formControlName="location" placeholder="e.g. Remote, San Francisco, CA">
+            </div>
+            <div class="form-group">
+              <label for="salaryRange">Salary Range / Compensation</label>
+              <input type="text" id="salaryRange" formControlName="salaryRange" placeholder="e.g. $140,000 - $160,000">
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="workMode">Work Mode</label>
+              <select id="workMode" formControlName="workMode">
+                <option value="remote">Remote</option>
+                <option value="hybrid">Hybrid</option>
+                <option value="onsite">On-Site</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="category">Category</label>
+              <select id="category" formControlName="category">
+                <option value="Frontend Engineering">Frontend Engineering</option>
+                <option value="Backend Engineering">Backend Engineering</option>
+                <option value="Full Stack Engineering">Full Stack Engineering</option>
+                <option value="Design & Engineering">Design & Engineering</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="gpaThreshold">Minimum GPA Required</label>
+              <input type="number" step="0.1" min="1.0" max="4.0" id="gpaThreshold" formControlName="gpaThreshold">
+            </div>
+            <div class="form-group">
+              <label for="sponsorshipRequired">Offers Visa Sponsorship</label>
+              <select id="sponsorshipRequired" formControlName="sponsorshipRequired">
+                <option [value]="true">Yes, offers sponsorship</option>
+                <option [value]="false">No, requires US Authorization</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="description">Job Description</label>
+            <textarea id="description" formControlName="description" rows="4" placeholder="Detail the day-to-day work, requirements, and benefits..."></textarea>
+          </div>
+
+          <!-- Skills Tagger (Job Requirements) -->
+          <div class="form-group">
+            <label>Required Technical Skills (Click suggestions or type custom)</label>
+            <div class="selected-skills-box">
+              @for (skill of selectedJobSkills(); track skill) {
+                <span class="skill-tag">
+                  {{ skill }}
+                  <button type="button" class="btn-remove-tag" (click)="toggleJobSkill(skill)">&times;</button>
+                </span>
+              }
+              @if (selectedJobSkills().length === 0) {
+                <span class="no-skills-placeholder">No required skills selected yet.</span>
+              }
+            </div>
+            
+            <div class="custom-skill-input">
+              <input type="text" [(ngModel)]="newJobSkillText" [ngModelOptions]="{standalone: true}" (keyup.enter)="addCustomJobSkill()" placeholder="Type a required skill...">
+              <button type="button" (click)="addCustomJobSkill()" class="btn btn-secondary">Add</button>
+            </div>
+
+            <div class="suggested-skills-list">
+              @for (skill of jobSkillsList; track skill) {
+                <button type="button" (click)="toggleJobSkill(skill)" class="suggestion-chip" [class.selected]="selectedJobSkills().includes(skill)">
+                  {{ skill }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" (click)="showPostJobModal.set(false)" class="btn btn-secondary">Cancel</button>
+            <button type="submit" [disabled]="postJobForm.invalid" class="btn btn-primary">Create Posting</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- CANDIDATE INSPECTOR MODAL (RECRUITER) -->
+  @if (inspectedApplicantData(); as data) {
+    <div class="modal-backdrop" (click)="inspectedApplicantData.set(null)"></div>
+    <div class="modal-container card inspector-modal animate-slide-up">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2>Candidate Profile: {{ data.profile.name }}</h2>
+          <span class="badge" [class.badge-success]="data.application.status === 'offered' || data.application.status === 'interviewing'" [class.badge-warning]="data.application.status === 'reviewing' || data.application.status === 'applied'" [class.badge-danger]="data.application.status === 'declined'">
+            Status: {{ data.application.status | uppercase }}
+          </span>
+        </div>
+        <button type="button" class="btn-close-modal" (click)="inspectedApplicantData.set(null)">&times;</button>
+      </div>
+
+      <div class="modal-body read-only-profile">
+        
+        <!-- Recruiter Status Action Toolbar -->
+        <div class="recruiter-action-bar card">
+          <span class="action-bar-label">Recruiter Workflow Actions:</span>
+          <div class="action-buttons-group">
+            <button 
+              type="button" 
+              class="btn btn-outline btn-sm" 
+              [class.active]="data.application.status === 'reviewing'"
+              (click)="updateInspectedStatus('reviewing')"
+            >
+              Mark Under Review
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-primary btn-sm" 
+              [class.active]="data.application.status === 'interviewing'"
+              (click)="updateInspectedStatus('interviewing')"
+            >
+              Advance to Interview
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-success btn-sm" 
+              [class.active]="data.application.status === 'offered'"
+              (click)="updateInspectedStatus('offered')"
+            >
+              Extend Job Offer 🎉
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-danger btn-sm" 
+              [class.active]="data.application.status === 'declined'"
+              (click)="updateInspectedStatus('declined')"
+            >
+              Decline
+            </button>
+          </div>
+        </div>
+
+        <div class="inspector-badge-row">
+          <span class="badge badge-success">GPA: {{ data.profile.gpa.toFixed(2) }}</span>
+          <span class="badge badge-neutral">Work Auth: {{ data.profile.workAuthorization === 'authorized' ? 'US Authorized' : 'Sponsorship Needed' }}</span>
+          <span class="badge badge-primary">Match Score: {{ data.application.matchScore }}%</span>
+        </div>
+
+        <div class="inspector-section">
+          <h4>General Details</h4>
+          <p><strong>Preferred Role:</strong> {{ data.profile.preferredRole || 'Not specified' }}</p>
+          <p><strong>Preferred Location:</strong> {{ data.profile.preferredLocation || 'Not specified' }}</p>
+          <p><strong>Work Mode:</strong> {{ (data.profile.preferredWorkMode || 'Not specified') | uppercase }}</p>
+        </div>
+
+        <div class="inspector-section">
+          <h4>Technical Skills & Match Overlap</h4>
+          <div class="tag-row">
+            @for (skill of data.profile.skills; track skill) {
+              <span class="badge badge-success skill-chip">{{ skill }}</span>
+            }
+            @if (!data.profile.skills?.length) {
+              <span class="no-skills-placeholder">No skills listed.</span>
+            }
+          </div>
+        </div>
+
+        <div class="inspector-section">
+          <h4>Certifications</h4>
+          <ul>
+            @for (cert of data.profile.certifications; track cert) {
+              <li>{{ cert }}</li>
+            }
+            @if (!data.profile.certifications?.length) {
+              <li>No certifications listed.</li>
+            }
+          </ul>
+        </div>
+
+        <div class="inspector-section">
+          <h4>Social Channels & Portfolio</h4>
+          <div class="social-links-grid">
+            @if (data.profile.portfolioUrl) {
+              <a [href]="data.profile.portfolioUrl" target="_blank" class="social-link-btn">🌐 Portfolio Website</a>
+            }
+            @if (data.profile.githubUrl) {
+              <a [href]="data.profile.githubUrl" target="_blank" class="social-link-btn">💻 GitHub Profile</a>
+            }
+            @if (data.profile.linkedinUrl) {
+              <a [href]="data.profile.linkedinUrl" target="_blank" class="social-link-btn">👔 LinkedIn Profile</a>
+            }
+          </div>
+        </div>
+
+        <div class="inspector-section">
+          <h4>Resume Details</h4>
+          <div class="mock-resume-viewer card">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+            <span>{{ data.profile.resumeName || 'alex_johnson_resume.pdf' }}</span>
+            <button class="btn btn-outline btn-sm" type="button">Preview Resume</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button (click)="inspectedApplicantData.set(null)" class="btn btn-secondary" type="button">Close Inspector</button>
+      </div>
+    </div>
+  }
+</div>
