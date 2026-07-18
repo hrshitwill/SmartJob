@@ -13,20 +13,29 @@
 
   <!-- Hero Section -->
   <section class="hero-section">
+    <app-dot-grid 
+      [dotSize]="2.5" 
+      [gap]="30" 
+      [proximity]="130" 
+      [shockRadius]="220"
+      [baseColor]="'rgba(99, 102, 241, 0.25)'" 
+      [activeColor]="'rgba(168, 85, 247, 0.95)'"
+    ></app-dot-grid>
     <div class="glow-bg"></div>
+
     <div class="hero-content">
-      <div class="badge badge-neutral animate-slide-up">
+      <div class="badge badge-neutral animate-slide-up delay-1">
         <span class="sparkle">✨</span> Powered by CredX Intelligent Match Engine
       </div>
-      <h1 class="hero-title animate-slide-up">
+      <h1 class="hero-title animate-slide-up delay-2">
         The Intelligent Way to Discover <br>
         Your Next <span class="text-gradient">Career Move</span>
       </h1>
-      <p class="hero-subtitle animate-slide-up">
+      <p class="hero-subtitle animate-slide-up delay-3">
         CredX Match ranks and explains your job compatibility by instantly analyzing your technical skills, GPA, and visa sponsorship status. No more guessing. Just smart matches.
       </p>
       
-      <div class="hero-actions animate-slide-up">
+      <div class="hero-actions animate-slide-up delay-4">
         <a routerLink="/register" class="btn btn-primary btn-lg">
           Get Started as Student
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
@@ -40,7 +49,7 @@
     </div>
 
     <!-- Product Preview Visual Mockup -->
-    <div class="product-preview animate-slide-up">
+    <div class="product-preview animate-slide-up delay-5">
       <div class="preview-header">
         <div class="preview-dots">
           <span></span><span></span><span></span>
