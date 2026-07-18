@@ -1,22 +1,40 @@
-# Node / Angular
-node_modules/
-dist/
-.angular/
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
+/backend/target
 
-# Logs
-*.log
-npm-debug.log*
+# Node & Build artifacts
+/node_modules
+npm-debug.log
+yarn-error.log
+/.mvn/wrapper/dists
 
-# OS / Editor
-.DS_Store
-.vscode/
+# IDEs and editors
 .idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
 
-# Java / Maven
-backend/target/
-*.class
-*.jar
+# Miscellaneous
+/.angular/cache
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
 
-# Environment secrets
-.env
-.env.local
+# System files
+.DS_Store
+Thumbs.db

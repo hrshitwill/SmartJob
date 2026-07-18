@@ -47,7 +47,6 @@ export class JobListComponent {
   // Compute unique locations for filter dropdown
   locations = computed<string[]>(() => {
     const list = this.jobService.jobs().map(j => {
-      // Extract city or state if possible, or use full string
       return j.location;
     });
     return Array.from(new Set(list));
@@ -63,7 +62,6 @@ export class JobListComponent {
     const matches = this.jobService.matchedJobs();
 
     return matches.filter(job => {
-      // 1. Text Search query
       if (query) {
         const titleMatch = job.title.toLowerCase().includes(query);
         const companyMatch = job.company.toLowerCase().includes(query);
@@ -75,22 +73,18 @@ export class JobListComponent {
         }
       }
 
-      // 2. Work Mode Filter
       if (workMode !== 'all' && job.workMode !== workMode) {
         return false;
       }
 
-      // 3. Location Filter
       if (location !== 'all' && job.location !== location) {
         return false;
       }
 
-      // 4. Category Filter
       if (category !== 'all' && job.category !== category) {
         return false;
       }
 
-      // 5. Sponsorship Filter
       if (sponsorship !== 'all') {
         if (sponsorship === 'sponsorship_only' && !job.sponsorshipRequired) {
           return false;
@@ -107,18 +101,18 @@ export class JobListComponent {
   applyingJobId = signal<string | null>(null);
 
   applyToJob(jobId: string, matchScore: number, event: Event) {
-    // Prevent routing clicks
     event.stopPropagation();
     event.preventDefault();
     
     this.applyingJobId.set(jobId);
     
     setTimeout(() => {
-      this.trackService.applyToJob(jobId, matchScore);
+      const success = this.trackService.applyToJob(jobId, matchScore);
       this.applyingJobId.set(null);
-      this.triggerConfetti();
-      this.toastService.success('Application submitted successfully! 🎉');
-    }, 1200);
+      if (success) {
+        this.triggerConfetti();
+      }
+    }, 600);
   }
 
   private triggerConfetti() {
@@ -129,19 +123,15 @@ export class JobListComponent {
       const particle = document.createElement('div');
       particle.className = 'confetti-particle';
       
-      // Random spread
       particle.style.left = (Math.random() * 100) + 'vw';
       particle.style.top = '-10px';
       
-      // Random sizing
       const size = (Math.random() * 6 + 6) + 'px';
       particle.style.width = size;
       particle.style.height = size;
       
-      // Color selector
       particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
       
-      // Rotations and speeds
       particle.style.animationDuration = (Math.random() * 1.2 + 1.2) + 's';
       particle.style.animationDelay = (Math.random() * 0.3) + 's';
       

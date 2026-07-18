@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -37,6 +37,12 @@ export class DashboardComponent {
   // Recruiter Candidate Inspector Modal state with application link
   inspectedApplicantData = signal<{ profile: any; application: any } | null>(null);
 
+  @HostListener('window:keydown.escape')
+  handleEscape() {
+    this.showPostJobModal.set(false);
+    this.inspectedApplicantData.set(null);
+  }
+
   inspectApplicant(app: any) {
     const profile = this.profileService.currentProfile() || {
       name: 'Alex Johnson',
@@ -64,7 +70,6 @@ export class DashboardComponent {
     
     this.trackService.updateApplicationStatus(current.application.id, newStatus);
     
-    // Update local modal state immediately
     this.inspectedApplicantData.set({
       ...current,
       application: { ...current.application, status: newStatus }

@@ -186,14 +186,10 @@
 
           <button 
             type="submit" 
-            [disabled]="registerForm.invalid || !passwordsMatch() || isLoading()" 
+            [disabled]="registerForm.invalid || !passwordsMatch()" 
             class="btn btn-primary btn-block"
           >
-            @if (isLoading()) {
-              <span class="spinner"></span> Creating Account...
-            } @else {
-              Create Account
-            }
+            Create Account
           </button>
         </form>
 
