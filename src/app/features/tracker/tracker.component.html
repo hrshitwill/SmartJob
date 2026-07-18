@@ -1,0 +1,84 @@
+<div class="tracker-page animate-fade">
+  <header class="page-header">
+    <h1>Application Pipeline</h1>
+    <p>Manage your applications workflow. Drag and drop cards to transition their status as you progress.</p>
+  </header>
+
+  <!-- Kanban Board Wrapper -->
+  <div class="kanban-board">
+    @for (col of columns; track col.id) {
+      <div 
+        class="kanban-column"
+        [class.drag-over]="activeDragOverColumn() === col.id"
+        [attr.data-status]="col.id"
+        (dragover)="onDragOver($event)"
+        (dragenter)="activeDragOverColumn.set(col.id)"
+        (dragleave)="activeDragOverColumn.set(null)"
+        (drop)="onDrop($event, col.id); activeDragOverColumn.set(null)"
+      >
+        <!-- Column Header -->
+        <div class="column-header">
+          <div class="header-indicator"></div>
+          <h3>{{ col.title }}</h3>
+          <span class="count-badge">{{ getAppsForColumn(col.id).length }}</span>
+        </div>
+
+        <!-- Cards List Container -->
+        <div class="column-cards-list">
+          @for (app of getAppsForColumn(col.id); track app.id) {
+            <div 
+              class="card app-card"
+              draggable="true"
+              (dragstart)="onDragStart($event, app.id)"
+              [routerLink]="['/jobs', app.jobId]"
+            >
+              <!-- Drag Handle Icon -->
+              <div class="card-drag-handle">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" />
+                </svg>
+              </div>
+
+              <div class="card-body">
+                <span class="comp-lbl">{{ app.companyName }}</span>
+                <h4>{{ app.jobTitle }}</h4>
+                <div class="card-meta">
+                  <span class="score badge badge-success">{{ app.matchScore }}% Match</span>
+                  <span class="date">{{ app.appliedDate }}</span>
+                </div>
+              </div>
+
+              <!-- Quick action navigation arrows (accessibility & mobile fallback) -->
+              <div class="card-actions" (click)="$event.stopPropagation()">
+                <button 
+                  type="button" 
+                  (click)="moveApp(app.id, col.id, 'prev')" 
+                  class="action-btn"
+                  [disabled]="col.id === 'applied'"
+                  title="Move status left"
+                >
+                  ←
+                </button>
+                <button 
+                  type="button" 
+                  (click)="moveApp(app.id, col.id, 'next')" 
+                  class="action-btn"
+                  [disabled]="col.id === 'offered'"
+                  title="Move status right"
+                >
+                  →
+                </button>
+              </div>
+            </div>
+          }
+
+          @if (getAppsForColumn(col.id).length === 0) {
+            <div class="column-empty-state">
+              <p>Drag card here</p>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>

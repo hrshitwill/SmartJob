@@ -1,0 +1,23 @@
+# Node / Angular
+node_modules/
+dist/
+.angular/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / Editor
+.DS_Store
+.vscode/
+.idea/
+
+# Java / Maven
+backend/target/
+*.class
+*.jar
+
+# Environment secrets
+.env
+.env.local
+node_modules

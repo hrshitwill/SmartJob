@@ -1,0 +1,263 @@
+<div class="wizard-container animate-slide-up">
+  <!-- Progress Header -->
+  <div class="wizard-header">
+    <div class="progress-bar-container">
+      <div class="progress-bar" [style.width.%]="(currentStep() / totalSteps) * 100"></div>
+    </div>
+    <div class="step-indicators">
+      <div class="step-dot" [class.active]="currentStep() >= 1" [class.completed]="currentStep() > 1">
+        <span class="dot-num">1</span>
+        <span class="dot-label">Preferences</span>
+      </div>
+      <div class="step-dot" [class.active]="currentStep() >= 2" [class.completed]="currentStep() > 2">
+        <span class="dot-num">2</span>
+        <span class="dot-label">GPA</span>
+      </div>
+      <div class="step-dot" [class.active]="currentStep() >= 3" [class.completed]="currentStep() > 3">
+        <span class="dot-num">3</span>
+        <span class="dot-label">Work Auth</span>
+      </div>
+      <div class="step-dot" [class.active]="currentStep() >= 4" [class.completed]="currentStep() > 4">
+        <span class="dot-num">4</span>
+        <span class="dot-label">Skills</span>
+      </div>
+      <div class="step-dot" [class.active]="currentStep() >= 5" [class.completed]="currentStep() > 5">
+        <span class="dot-num">5</span>
+        <span class="dot-label">Resume</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wizard Step Body -->
+  <div class="wizard-body card">
+    <!-- STEP 1: Job Preferences -->
+    @if (currentStep() === 1) {
+      <div class="step-content">
+        <h2>Preferred Role & Location</h2>
+        <p class="subtitle">Tell us what you're looking for to align matches.</p>
+        
+        <form [formGroup]="preferencesForm" class="step-form">
+          <div class="form-group">
+            <label for="preferredRole">Desired Job Title</label>
+            <input 
+              type="text" 
+              id="preferredRole" 
+              formControlName="preferredRole" 
+              placeholder="e.g. Frontend Engineer, Product Designer"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="preferredLocation">Target Location</label>
+            <input 
+              type="text" 
+              id="preferredLocation" 
+              formControlName="preferredLocation" 
+              placeholder="e.g. Chicago, IL or Remote"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="preferredWorkMode">Preferred Work Mode</label>
+            <select id="preferredWorkMode" formControlName="preferredWorkMode">
+              <option value="remote">Fully Remote</option>
+              <option value="hybrid">Hybrid</option>
+              <option value="onsite">On-Site</option>
+              <option value="all">Any Work Mode</option>
+            </select>
+          </div>
+        </form>
+      </div>
+    }
+
+    <!-- STEP 2: GPA Criteria -->
+    @if (currentStep() === 2) {
+      <div class="step-content">
+        <h2>Academic Information</h2>
+        <p class="subtitle">GPA is a key filter used by several hackathon employers.</p>
+        
+        <form [formGroup]="academicForm" class="step-form">
+          <div class="form-group">
+            <label for="gpa">Cumulative GPA (Scale 4.0)</label>
+            <input 
+              type="number" 
+              id="gpa" 
+              formControlName="gpa" 
+              step="0.01" 
+              min="0.1" 
+              max="4.0" 
+              placeholder="e.g. 3.75"
+            >
+            @if (academicForm.get('gpa')?.touched && academicForm.get('gpa')?.invalid) {
+              <span class="error-msg">Please enter a valid GPA between 0.1 and 4.0</span>
+            }
+          </div>
+        </form>
+      </div>
+    }
+
+    <!-- STEP 3: Work Authorization -->
+    @if (currentStep() === 3) {
+      <div class="step-content">
+        <h2>Work Authorization Status</h2>
+        <p class="subtitle">Select your authorization. Some roles require visa sponsorship support.</p>
+        
+        <form [formGroup]="workAuthForm" class="step-form">
+          <div class="radio-cards">
+            <label class="radio-card" [class.selected]="workAuthForm.get('workAuthorization')?.value === 'authorized'">
+              <input type="radio" value="authorized" formControlName="workAuthorization">
+              <div class="radio-body">
+                <span class="radio-title">Authorized to Work</span>
+                <span class="radio-desc">You do not require visa sponsorship (US Citizen, Permanent Resident, etc.).</span>
+              </div>
+            </label>
+
+            <label class="radio-card" [class.selected]="workAuthForm.get('workAuthorization')?.value === 'needs_sponsorship'">
+              <input type="radio" value="needs_sponsorship" formControlName="workAuthorization">
+              <div class="radio-body">
+                <span class="radio-title">Requires Sponsorship</span>
+                <span class="radio-desc">You require visa sponsorship to work (F-1 OPT, H-1B, etc.).</span>
+              </div>
+            </label>
+          </div>
+        </form>
+      </div>
+    }
+
+    <!-- STEP 4: Technical Skills Tagger -->
+    @if (currentStep() === 4) {
+      <div class="step-content">
+        <h2>Technical & Design Skills</h2>
+        <p class="subtitle">Select or add your technical stack. This is critical for computing match scores.</p>
+        
+        <div class="skills-manager">
+          <!-- Added Skills Tags -->
+          <div class="selected-skills-box">
+            @if (selectedSkills().length === 0) {
+              <span class="no-skills-placeholder">No skills selected yet. Click from suggestions below or add custom skills.</span>
+            } @else {
+              @for (skill of selectedSkills(); track skill) {
+                <span class="skill-tag">
+                  {{ skill }}
+                  <button type="button" class="btn-remove-tag" (click)="removeSkill(skill)">&times;</button>
+                </span>
+              }
+            }
+          </div>
+
+          <!-- Custom Skill Add input -->
+          <div class="custom-skill-input">
+            <input 
+              type="text" 
+              [(ngModel)]="newSkillText" 
+              (keyup.enter)="addCustomSkill()"
+              placeholder="Type a skill and hit Enter... (e.g. AWS, Python)"
+            >
+            <button type="button" (click)="addCustomSkill()" class="btn btn-secondary">Add</button>
+          </div>
+
+          <!-- Recommended suggestions -->
+          <div class="suggested-skills">
+            <span class="suggestions-label">Suggestions:</span>
+            <div class="suggestions-list">
+              @for (skill of availableSkills; track skill) {
+                <button 
+                  type="button" 
+                  (click)="toggleSkill(skill)" 
+                  class="suggestion-chip"
+                  [class.selected]="selectedSkills().includes(skill)"
+                >
+                  {{ skill }}
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- STEP 5: Resume Upload Simulator -->
+    @if (currentStep() === 5) {
+      <div class="step-content">
+        <h2>Upload Resume (Simulation)</h2>
+        <p class="subtitle">Upload your resume to finalize your profile setup.</p>
+        
+        @if (isParsing()) {
+          <!-- Skeleton parser loader -->
+          <div class="parsing-loader-box">
+            <div class="shimmer-anim parser-skeleton-line title"></div>
+            <div class="shimmer-anim parser-skeleton-line short"></div>
+            <div class="shimmer-anim parser-skeleton-line"></div>
+            <span class="parsing-text">AI Parser: Analyzing resume & extracting technical skills...</span>
+          </div>
+        } @else {
+          <!-- Standard Drag-Drop Dropzone -->
+          <div 
+            class="upload-dropzone" 
+            [class.dragging]="isDragging()"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave()"
+            (drop)="onDrop($event)"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="upload-icon">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+            </svg>
+            <p class="dropzone-text">Drag & drop your resume file here, or <span class="browse-link">browse</span></p>
+            <p class="file-types">Supports PDF, DOC, DOCX up to 5MB</p>
+            <input 
+              type="file" 
+              id="resume-file" 
+              class="hidden-file-input" 
+              (change)="onFileSelected($event)"
+              accept=".pdf,.doc,.docx"
+            >
+          </div>
+
+          @if (uploadedFileName()) {
+            <div class="uploaded-file-row card">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="file-icon">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <div class="file-info">
+                <span class="file-name">{{ uploadedFileName() }}</span>
+                <span class="file-size">Ready for extraction</span>
+              </div>
+              <div class="file-status badge badge-success">Parsed ✓</div>
+            </div>
+          }
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Action controls -->
+  <div class="wizard-footer">
+    <button 
+      type="button" 
+      class="btn btn-secondary" 
+      (click)="prevStep()"
+      [disabled]="currentStep() === 1 || isParsing()"
+    >
+      Back
+    </button>
+    
+    @if (currentStep() < totalSteps) {
+      <button 
+        type="button" 
+        class="btn btn-primary" 
+        (click)="nextStep()"
+      >
+        Next Step
+      </button>
+    } @else {
+      <button 
+        type="button" 
+        class="btn btn-primary" 
+        (click)="finishSetup()"
+        [disabled]="isParsing()"
+      >
+        Finish Setup
+      </button>
+    }
+  </div>
+</div>
