@@ -1,0 +1,437 @@
+.job-list-page {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  h1 {
+    font-size: 1.85rem;
+    font-weight: 700;
+  }
+
+  p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+  }
+}
+
+/* Filters Card */
+.filters-card {
+  padding: 24px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.search-row {
+  width: 100%;
+}
+
+.search-input-wrapper {
+  position: relative;
+  width: 100%;
+
+  .search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    color: var(--text-muted);
+  }
+
+  input {
+    padding-left: 48px;
+    background-color: var(--bg-tertiary);
+    font-size: 0.95rem;
+  }
+}
+
+.filter-controls-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+
+  @media (max-width: 992px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 576px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  
+  select {
+    background-color: var(--bg-tertiary);
+    font-size: 0.85rem;
+    padding: 10px 12px;
+  }
+}
+
+/* Results grid layout */
+.jobs-feed-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.results-header {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.jobs-list-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+
+  @media (max-width: 992px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Premium Job Card */
+.job-card {
+  position: relative;
+  padding: 28px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &:hover {
+    border-color: var(--accent-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg), var(--accent-glow);
+  }
+}
+
+/* Absolute Bookmark Button */
+.bookmark-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  transition: all 0.2s ease;
+  z-index: 10;
+  
+  svg {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.2s ease;
+  }
+
+  &:hover {
+    color: var(--accent-secondary);
+    background-color: rgba(236, 72, 153, 0.05);
+    svg {
+      transform: scale(1.1);
+    }
+  }
+
+  &.active {
+    color: var(--accent-secondary);
+    svg {
+      fill: var(--accent-secondary);
+    }
+  }
+}
+
+.card-header-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding-right: 28px; /* leave space for bookmark button */
+
+  .company-logo-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-weight: 800;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .header-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .company-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    
+    .company-name {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+
+    .verified-badge {
+      display: inline-flex;
+      color: var(--accent-primary);
+      width: 14px;
+      height: 14px;
+      
+      svg {
+        width: 100%;
+        height: 100%;
+      }
+    }
+    
+    .urgency-badge {
+      font-size: 0.55rem;
+      padding: 1px 6px;
+    }
+  }
+
+  .job-title-text {
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text-primary);
+  }
+
+  .location-text {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    
+    .work-mode-badge {
+      font-weight: 700;
+      font-size: 0.75rem;
+      color: var(--accent-primary);
+    }
+  }
+}
+
+.desc-preview {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Skills Gap Preview styling */
+.skills-gap-preview {
+  border-top: 1px solid var(--border-color);
+  padding-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  .gap-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .gap-label-matched {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--success);
+  }
+
+  .gap-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .gap-tag {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--danger);
+    background-color: var(--danger-bg);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(239, 68, 68, 0.15);
+  }
+
+  .gap-tag-more {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    background-color: var(--bg-tertiary);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+}
+
+/* Card Footer elements */
+.card-footer-row {
+  border-top: 1px solid var(--border-color);
+  padding-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto; /* Push footer to bottom */
+}
+
+.salary-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .salary-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .salary-number {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+}
+
+.footer-cta-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.match-score-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background-color: var(--bg-tertiary);
+  border: 2px solid var(--border-color);
+
+  .score-number {
+    font-size: 0.85rem;
+    font-weight: 800;
+    line-height: 1;
+    font-family: var(--font-display);
+  }
+
+  .score-label {
+    font-size: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    opacity: 0.6;
+    margin-top: 2px;
+  }
+
+  &.high {
+    border-color: var(--success);
+    .score-number { color: var(--success); }
+  }
+
+  &.medium {
+    border-color: var(--warning);
+    .score-number { color: var(--warning); }
+  }
+
+  &.low {
+    border-color: var(--danger);
+    .score-number { color: var(--danger); }
+  }
+}
+
+.quick-apply-btn:hover {
+  transform: scale(1.02);
+}
+
+/* Empty states */
+.empty-results {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+
+  svg {
+    width: 48px;
+    height: 48px;
+    color: var(--text-muted);
+  }
+
+  h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+
+  p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+}
+
+/* Applying States & Loader Spinner */
+.job-card.applying {
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 24px rgba(99, 102, 241, 0.2) !important;
+  pointer-events: none;
+  
+  .match-score-badge {
+    animation: badgePulse 0.5s infinite alternate;
+  }
+}
+
+.spinner-loader {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  border-top-color: #ffffff;
+  display: inline-block;
+  animation: buttonSpin 0.75s linear infinite;
+  margin-right: 4px;
+}
+
+@keyframes buttonSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes badgePulse {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.1); }
+}

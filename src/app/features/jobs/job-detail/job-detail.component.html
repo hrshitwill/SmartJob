@@ -1,0 +1,190 @@
+@if (job(); as j) {
+  <div class="job-detail-page animate-fade">
+    <!-- Back Link -->
+    <div class="back-navigation">
+      <a routerLink="/jobs" class="back-link">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+        Back to Job Postings
+      </a>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="detail-grid">
+      <!-- Left Column: Job Description details -->
+      <div class="column-left">
+        <div class="card job-description-card">
+          <div class="job-header">
+            <div class="company-logo">{{ j.company.charAt(0) }}</div>
+            <div class="job-titles">
+              <h1>{{ j.title }}</h1>
+              <p class="company-info">{{ j.company }} • {{ j.location }} • <span class="work-mode-tag">{{ j.workMode | uppercase }}</span></p>
+            </div>
+          </div>
+
+          <div class="meta-strip">
+            <div class="meta-item">
+              <span class="meta-label">Category</span>
+              <span class="meta-val">{{ j.category }}</span>
+            </div>
+            <div class="meta-strip-divider"></div>
+            <div class="meta-item">
+              <span class="meta-label">Salary Range</span>
+              <span class="meta-val">{{ j.salaryRange }}</span>
+            </div>
+            <div class="meta-strip-divider"></div>
+            <div class="meta-item">
+              <span class="meta-label">Posted Date</span>
+              <span class="meta-val">{{ j.postedDate }}</span>
+            </div>
+          </div>
+
+          <div class="job-body">
+            <section class="body-section">
+              <h2>Role Description</h2>
+              <p>{{ j.description }}</p>
+            </section>
+
+            <section class="body-section">
+              <h2>Required Technical Skills</h2>
+              <p>Candidates must possess or demonstrate familiarity with the following skills to pass automatic matching screening:</p>
+              <div class="skills-grid">
+                @for (skill of j.skillsRequired; track skill) {
+                  <div class="skill-item-card" [class.has-skill]="j.match.skillsMatched.includes(skill)">
+                    <span class="skill-dot"></span>
+                    <span class="skill-name">{{ skill }}</span>
+                    <span class="skill-status">{{ j.match.skillsMatched.includes(skill) ? 'Matched ✓' : 'Missing' }}</span>
+                  </div>
+                }
+              </div>
+            </section>
+
+            <!-- Learning Roadmap Section -->
+            @if (j.match.skillsMissing.length > 0) {
+              <section class="body-section roadmap-section">
+                <h2>🎓 Recommended Learning Roadmap</h2>
+                <p>You have missing skills for this role. Complete these free courses and tutorials to boost your match score:</p>
+                
+                <div class="roadmap-grid">
+                  @for (item of j.match.roadmap; track item.skill) {
+                    <a [href]="item.link" target="_blank" rel="noopener" class="roadmap-card card card-interactive">
+                      <div class="roadmap-info">
+                        <span class="roadmap-tag">Resource</span>
+                        <h4>Learn {{ item.skill }}</h4>
+                        <p>{{ item.resource }}</p>
+                      </div>
+                      <span class="roadmap-arrow">→</span>
+                    </a>
+                  }
+                </div>
+              </section>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Match Score & Explainability -->
+      <div class="column-right">
+        <div class="card match-explainer-card">
+          <div class="explainer-header">
+            <h3>Smart Match Score</h3>
+            <p>Calculated by the CredX Matching Engine</p>
+          </div>
+
+          <!-- Big Score Visualization -->
+          <div class="score-circle-wrapper">
+            <div class="score-circle" [class.high]="j.match.score >= 80" [class.medium]="j.match.score >= 50 && j.match.score < 80" [class.low]="j.match.score < 50">
+              <span class="score-val">{{ j.match.score | matchScore:'' }}</span>
+              <span class="score-lbl">Compatibility</span>
+            </div>
+          </div>
+
+          <!-- Match Confidence Level -->
+          <div class="confidence-index-row">
+            <span class="index-lbl">Match Confidence:</span>
+            @if (j.match.score >= 80) {
+              <span class="index-val badge badge-success">High (95%)</span>
+            } @else if (j.match.score >= 50) {
+              <span class="index-val badge badge-warning">Medium (70%)</span>
+            } @else {
+              <span class="index-val badge badge-danger">Low (40%)</span>
+            }
+          </div>
+
+          <!-- Match Breakdown Criteria Checklist -->
+          <div class="match-checklist">
+            <!-- Criteria 1: Skills -->
+            <div class="check-item" [class.passed]="j.match.skillsPercent >= 50">
+              <div class="check-status-icon">
+                @if (j.match.skillsPercent >= 50) {
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                  </svg>
+                } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="warn-icon">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                  </svg>
+                }
+              </div>
+              <div class="check-details">
+                <h4>Skills Overlap ({{ j.match.skillsScore }}/50 Points)</h4>
+                <p>Matched {{ j.match.skillsMatched.length }} of {{ j.skillsRequired.length }} required skills ({{ j.match.skillsPercent }}% overlap).</p>
+              </div>
+            </div>
+
+            <!-- Criteria 2: GPA -->
+            <div class="check-item" [class.passed]="j.match.gpaPassed">
+              <div class="check-status-icon">
+                @if (j.match.gpaPassed) {
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                  </svg>
+                } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="danger-icon">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                  </svg>
+                }
+              </div>
+              <div class="check-details">
+                <h4>Academic Status ({{ j.match.gpaScore }}/30 Points)</h4>
+                <p>Job requires GPA of {{ j.gpaThreshold.toFixed(2) }}. Your GPA is {{ (profileService.currentProfile()?.gpa || 0).toFixed(2) }}.</p>
+              </div>
+            </div>
+
+            <!-- Criteria 3: Work Auth -->
+            <div class="check-item" [class.passed]="j.match.workAuthCompatible">
+              <div class="check-status-icon">
+                @if (j.match.workAuthCompatible) {
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                  </svg>
+                } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="danger-icon">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                  </svg>
+                }
+              </div>
+              <div class="check-details">
+                <h4>Work Auth Check ({{ j.match.workAuthScore }}/20 Points)</h4>
+                <p>{{ j.sponsorshipRequired ? 'Visa sponsorship is available.' : 'Employer requires US authorization (no sponsorship).' }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="explainer-footer">
+            @if (isApplied()) {
+              <button class="btn btn-secondary btn-block btn-lg" disabled>
+                Applied (Status: {{ getAppStatus() | uppercase }})
+              </button>
+            } @else {
+              <button (click)="applyToJob()" class="btn btn-primary btn-block btn-lg">
+                Submit Application
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}

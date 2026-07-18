@@ -1,0 +1,205 @@
+<div class="job-list-page animate-fade">
+  <header class="page-header">
+    <h1>Smart Recommendations</h1>
+    <p>Explore opportunities matched and ranked by your profile compatibility score.</p>
+  </header>
+
+  <!-- Filter Controls Section -->
+  <section class="filters-card card">
+    <div class="search-row">
+      <div class="search-input-wrapper">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input 
+          type="text" 
+          [ngModel]="searchQuery()" 
+          (ngModelChange)="searchQuery.set($event)" 
+          placeholder="Search by job title, company name, or tech skills..."
+        >
+      </div>
+    </div>
+
+    <div class="filter-controls-row">
+      <!-- Category Filter -->
+      <div class="filter-group">
+        <label for="categoryFilter">Category</label>
+        <select 
+          id="categoryFilter" 
+          [ngModel]="selectedCategory()" 
+          (ngModelChange)="selectedCategory.set($event)"
+        >
+          <option value="all">All Categories</option>
+          <option value="Frontend Engineering">Frontend Engineering</option>
+          <option value="Backend Engineering">Backend Engineering</option>
+          <option value="Full Stack Engineering">Full Stack Engineering</option>
+          <option value="Design & Engineering">Design & Engineering</option>
+        </select>
+      </div>
+
+      <!-- Work Mode Filter -->
+      <div class="filter-group">
+        <label for="workModeFilter">Work Mode</label>
+        <select 
+          id="workModeFilter" 
+          [ngModel]="selectedWorkMode()" 
+          (ngModelChange)="selectedWorkMode.set($event)"
+        >
+          <option value="all">All Modes</option>
+          <option value="remote">Remote</option>
+          <option value="hybrid">Hybrid</option>
+          <option value="onsite">On-Site</option>
+        </select>
+      </div>
+
+      <!-- Location Filter -->
+      <div class="filter-group">
+        <label for="locationFilter">Location</label>
+        <select 
+          id="locationFilter" 
+          [ngModel]="selectedLocation()" 
+          (ngModelChange)="selectedLocation.set($event)"
+        >
+          <option value="all">All Locations</option>
+          @for (loc of locations(); track loc) {
+            <option [value]="loc">{{ loc }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Visa Sponsorship Filter -->
+      <div class="filter-group">
+        <label for="sponsorshipFilter">Visa Support</label>
+        <select 
+          id="sponsorshipFilter" 
+          [ngModel]="requiresSponsorship()" 
+          (ngModelChange)="requiresSponsorship.set($event)"
+        >
+          <option value="all">All Postings</option>
+          <option value="sponsorship_only">Offers Visa Sponsorship</option>
+          <option value="no_sponsorship">Requires US Auth</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <!-- Job Feed Listings -->
+  <div class="jobs-feed-layout">
+    <div class="results-header">
+      <p class="results-count">{{ filteredJobs().length }} Opportunities Found</p>
+    </div>
+
+    <div class="jobs-list-grid">
+      @for (job of filteredJobs(); track job.id) {
+        <div 
+          class="card job-card animate-slide-up" 
+          [class.applying]="applyingJobId() === job.id"
+          [routerLink]="['/jobs', job.id]"
+        >
+          
+          <!-- Bookmark Button -->
+          <button 
+            type="button" 
+            class="bookmark-btn" 
+            [class.active]="isBookmarked(job.id)"
+            (click)="toggleBookmark(job.id, $event)"
+            title="Bookmark Job"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+            </svg>
+          </button>
+
+          <!-- Top Meta Row -->
+          <div class="card-header-row">
+            <div class="company-logo-avatar">{{ job.company.charAt(0) }}</div>
+            <div class="header-details">
+              <div class="company-row">
+                <span class="company-name">{{ job.company }}</span>
+                <!-- Verified Badge -->
+                <span class="verified-badge" title="Verified Posting">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.897-11.3a.75.75 0 011.04.108l-4.5 5.25a.75.75 0 01-1.084.017l-2.25-2.25a.75.75 0 111.06-1.06l1.666 1.667 3.972-4.632z" clip-rule="evenodd" />
+                  </svg>
+                </span>
+                
+                @if (job.gpaThreshold >= 3.5) {
+                  <span class="badge badge-warning urgency-badge">High GPA Requirement</span>
+                }
+              </div>
+              <h3 class="job-title-text">{{ job.title }}</h3>
+              <p class="location-text">{{ job.location }} • <span class="work-mode-badge">{{ job.workMode | uppercase }}</span></p>
+            </div>
+          </div>
+
+          <!-- Description Preview -->
+          <p class="desc-preview">{{ job.description | slice:0:150 }}...</p>
+
+          <!-- Missing Skills Tags Preview -->
+          @if (job.match.skillsMissing.length > 0) {
+            <div class="skills-gap-preview">
+              <span class="gap-label">Missing:</span>
+              <div class="gap-tags">
+                @for (skill of job.match.skillsMissing.slice(0, 3); track skill) {
+                  <span class="gap-tag">{{ skill }}</span>
+                }
+                @if (job.match.skillsMissing.length > 3) {
+                  <span class="gap-tag-more">+{{ job.match.skillsMissing.length - 3 }}</span>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="skills-gap-preview">
+              <span class="gap-label-matched">✓ Full Skills Overlap</span>
+            </div>
+          }
+
+          <!-- Footer Actions & Compatibility Rings -->
+          <div class="card-footer-row">
+            <div class="salary-details">
+              <span class="salary-label">Compensation</span>
+              <span class="salary-number">{{ job.salaryRange }}</span>
+            </div>
+
+            <div class="footer-cta-wrapper">
+              <!-- Match score circle -->
+              <div class="match-score-badge" [class.high]="job.match.score >= 80" [class.medium]="job.match.score >= 50 && job.match.score < 80" [class.low]="job.match.score < 50">
+                <span class="score-number">{{ job.match.score | matchScore:'' }}</span>
+                <span class="score-label">Match</span>
+              </div>
+
+              @if (applyingJobId() === job.id) {
+                <button type="button" class="btn btn-primary btn-sm" disabled>
+                  <span class="spinner-loader"></span>
+                  Applying...
+                </button>
+              } @else if (isApplied(job.id)) {
+                <button type="button" class="btn btn-secondary btn-sm" disabled>
+                  Applied ✓
+                </button>
+              } @else {
+                <button 
+                  type="button" 
+                  (click)="applyToJob(job.id, job.match.score, $event)" 
+                  class="btn btn-primary btn-sm quick-apply-btn"
+                >
+                  Quick Apply
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (filteredJobs().length === 0) {
+        <div class="card empty-results">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          <h3>No matching postings found</h3>
+          <p>Try resetting your search query or relaxing your filter parameters.</p>
+        </div>
+      }
+    </div>
+  </div>
+</div>
